@@ -1,17 +1,17 @@
 
 # FusionPBX Settings
-domain_name=ip_address                      # hostname, ip_address or a custom value
+domain_name=fusiondev.nsinnovations.net                      # hostname, ip_address or a custom value
 system_username=admin                       # default username admin
 system_password=random                      # random or a custom value
-system_branch=5.3                           # master, 5.3
+system_branch=master                           # master, 5.3
 
 # FreeSWITCH Settings
 switch_branch=stable                        # master, stable
-switch_source=true                          # true (source compile) or false (binary package)
-switch_package=false                        # true (binary package) or false (source compile)
+switch_source=false                          # true (source compile) or false (binary package)
+switch_package=true                        # true (binary package) or false (source compile)
 switch_version=1.10.12                      # which source code to download, only for source
 switch_tls=true                             # true or false
-switch_token=                               # Get the auth token from https://signalwire.com
+switch_token=pat_b6nyAteuF4qapd3U5B1b5Sa6                               # Get the auth token from https://signalwire.com
                                             # Signup or Login -> Profile -> Personal Auth Token
 # Sofia-Sip Settings
 sofia_version=1.13.17                       # release-version for sofia-sip to use
@@ -34,6 +34,6 @@ letsencrypt_folder=true                     # true or false
 application_transcribe=true                # Speech to Text
 application_speech=true                    # Text to Speech
 application_device_logs=true               # Log device provision requests
-application_dialplan_tools=false           # Add additional dialplan applications
-application_edit=false                     # Editor for XML, Provision, Scripts, and PHP
+application_dialplan_tools=true           # Add additional dialplan applications
+application_edit=true                     # Editor for XML, Provision, Scripts, and PHP
 application_sip_trunks=false               # Registration based SIP trunks
