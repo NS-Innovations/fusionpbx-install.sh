@@ -3,6 +3,9 @@
 #move to script directory so all relative paths work
 cd "$(dirname "$0")"
 
+#collect configuration variables (writes resources/config.sh)
+. ./configure.sh
+
 #includes
 . ./resources/config.sh
 . ./resources/colors.sh
@@ -25,6 +28,10 @@ apt-get install -y dialog
 apt-get install -y nano
 apt-get install -y net-tools
 apt-get install -y gpg
+apt-get install -y git
+
+#Git global config, credential store, and safe directory
+resources/git.sh
 
 #SNMP
 apt-get install -y snmpd
