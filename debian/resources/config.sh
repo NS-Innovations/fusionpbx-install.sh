@@ -1,7 +1,15 @@
 
 # FusionPBX Settings
-domain_name=ip_address                      # hostname, ip_address or a custom value
-system_username=admin                       # default username admin
+# Get machine IP for default domain
+DEFAULT_IP=$(hostname -I | awk '{print $1}')
+
+printf "Domain name [default: %s]: " "$DEFAULT_IP"
+read domain_name
+domain_name=${domain_name:-$DEFAULT_IP}
+
+printf "System username [default: admin]: "
+read system_username
+system_username=${system_username:-admin}
 system_password=random                      # random or a custom value
 system_branch=5.5                           # master, 5.5
 
