@@ -8,17 +8,8 @@ cd "$(dirname "$0")"
 . ./resources/colors.sh
 . ./resources/environment.sh
 
-#Git Credentials
-printf "Git email: "
-read GIT_EMAIL
-printf "Git password/token: "
-stty -echo
-read GIT_PASSWORD
-stty echo
-printf "\n"
-
 # removes the cd img from the /etc/apt/sources.list file (not needed after base install)
-...sed -i '/cdrom:/d' /etc/apt/sources.list
+sed -i '/cdrom:/d' /etc/apt/sources.list
 
 #Update to latest packages
 verbose "Update installed packages"
