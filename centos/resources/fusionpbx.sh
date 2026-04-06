@@ -36,7 +36,7 @@ mkdir -p /var/cache/fusionpbx
 chown -R freeswitch:daemon /var/cache/fusionpbx
 
 #get the source code
-git clone $BRANCH https://$GIT_EMAIL:$GIT_PASSWORD@git.nsinnovations.net/nsinnovations/fusionpbx.git/var/www/fusionpbx
+git clone $BRANCH https://git.nsinnovations.net/nsinnovations/fusionpbx.gitvar/www/fusionpbx
 
 #send a message
 verbose "FusionPBX Installed"
