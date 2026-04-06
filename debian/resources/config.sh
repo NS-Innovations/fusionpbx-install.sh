@@ -40,11 +40,3 @@ application_device_logs=true       # Log device provision requests
 application_dialplan_tools=false   # Add additional dialplan applications
 application_edit=false             # Editor for XML, Provision, Scripts, and PHP
 application_sip_trunks=false       # Registration-based SIP trunks
-
-# Git Settings
-# git_server is auto-detected from the clone URL in resources/fusionpbx.sh
-# by configure.sh at install time. Set manually here only if running git.sh
-# standalone without configure.sh.
-git_server=                  # Hostname for the git credential store entry
-git_username=                # Git username or email for credential store
-git_password=                # Git password or personal access token
