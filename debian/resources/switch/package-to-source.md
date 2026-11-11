@@ -7,6 +7,9 @@ existing installer scripts.
 The installer has no package-to-source script. `source-to-package.sh` goes the
 other way and was written for the old `/usr/local/freeswitch` layout.
 
+To update FreeSWITCH once it's a source install, see
+[Updating a source install](#updating-a-source-install).
+
 ## Why this is straightforward
 
 `source-release.sh` configures FreeSWITCH with:
@@ -176,9 +179,9 @@ fs_cli -x 'show modules' | diff /root/fs-modules-before.txt -
     `mod_distributor`, `mod_sms`.
 
   If you use any of these, enable them in
-  `/usr/src/freeswitch-<version>/modules.conf`, then run `make && make install`
-  again (see the rebuild steps below). Otherwise FreeSWITCH logs load errors
-  for them in FusionPBX's Modules list.
+  `/usr/src/freeswitch-<version>/modules.conf` and rebuild (see "Rebuilding
+  after a module change" below). Otherwise FreeSWITCH logs load errors for
+  them in FusionPBX's Modules list.
 - **PostgreSQL ordering.** `package-systemd.sh` installs a service file that
   doesn't start FreeSWITCH after `postgresql.service`. That ordering came from
   a `sed` in `package-release.sh`. To add it back:
@@ -191,9 +194,101 @@ fs_cli -x 'show modules' | diff /root/fs-modules-before.txt -
 
 ---
 
-## Later source rebuilds and upgrades
+## Updating a source install
 
-You don't strictly have to stop FreeSWITCH before `make install`, but you should:
+The installer has no FreeSWITCH update script. You update a source install by
+rebuilding in the existing source folder, `/usr/src/freeswitch-<version>`.
+
+`source-release.sh` checks out `v1.11` as a **branch**, not a fixed tag, so
+`git pull` in `/usr/src/freeswitch-1.11` picks up new 1.11.x releases. Check
+what you're on with `freeswitch -version` or `git describe --tags`.
+
+### Point release (for example 1.11.2 → 1.11.3)
+
+```sh
+# 1. record the current state and back up
+freeswitch -version
+fs_cli -x 'show modules' > /root/fs-modules-before.txt
+tar czf /root/fs-backup-$(date +%F).tgz /etc/freeswitch
+
+# 2. get the new code
+cd /usr/src/freeswitch-1.11
+git pull
+
+# 3. reconfigure with the same options source-release.sh uses
+rm -f config.cache
+./bootstrap.sh -j
+export CPPFLAGS="${CPPFLAGS} -DHAVE_NUA_RELOAD_TLS"
+./configure -C --enable-portable-binary --disable-dependency-tracking --enable-debug \
+  --prefix=/usr --localstatedir=/var --sysconfdir=/etc \
+  --with-openssl --enable-core-pgsql-support
+
+# 4. compile while FreeSWITCH is still running
+make -j $(getconf _NPROCESSORS_ONLN)
+
+# 5. short downtime: install and restart
+systemctl stop freeswitch
+make install && ldconfig
+systemctl start freeswitch
+
+# 6. check it
+freeswitch -version
+fs_cli -x 'show modules' | diff /root/fs-modules-before.txt -
+```
+
+What each part does:
+
+- **Your config is safe.** `make install` only installs the sample config when
+  `/etc/freeswitch` doesn't exist, so it won't touch your existing one.
+- **Your module choices are kept.** `bootstrap.sh` only creates `modules.conf`
+  if it's missing, so the installer's module edits stay in place.
+- **Why the cache is deleted.** `rm -f config.cache` stops the
+  `configure -C` cache from carrying over old results after the pull.
+- **Rolling back:** run `git checkout v1.11.2` (or whichever version you were
+  on) in the source folder, then repeat steps 3–5. Run `git checkout v1.11`
+  afterwards to get back onto the branch.
+
+### Rebuilding after a module change
+
+To add a module you turned on in `modules.conf`, skip the `git pull` and
+`configure`. Run `make`, then step 5.
+
+### Dependencies (sofia-sip, spandsp, libks)
+
+Only rebuild these when a new FreeSWITCH release needs it, or when
+`sofia_version` in `config.sh` changes. Rebuild them **before** FreeSWITCH,
+with `make install && ldconfig` in each folder.
+
+- **Installed immediately.** The new libraries take effect as soon as they're
+  installed, so do this inside the maintenance window.
+- **sofia-sip needs a fresh download.** `/usr/src/sofia-sip` comes from a
+  release zip, not git, so `git pull` won't work there. For a new version,
+  delete the folder and download the new zip, which is what
+  `source-release.sh` does.
+- **libks and spandsp** are git clones.
+
+### Major version (for example 1.10.12 → 1.11)
+
+Change `switch_version` in `config.sh`, then stop FreeSWITCH and run
+`switch/source-release.sh`. Don't run `switch.sh`, because it also runs
+`conf-copy.sh`, which replaces your config. The script clones into a new
+`freeswitch-<version>` folder and installs over the old binaries.
+
+### Why not just run `source-release.sh` for every update?
+
+You can, but the script has downsides for routine updates:
+
+- It deletes the source folder and clones it again.
+- It rebuilds the dependencies if their folders are more than 24 hours old.
+- It runs `apt upgrade -y`.
+- It runs `make install` without stopping FreeSWITCH first, so stop it
+  yourself beforehand. That means downtime for the whole compile.
+
+The manual steps above are faster and keep downtime to a minute or two.
+
+### Do I have to stop FreeSWITCH before `make install`?
+
+You don't strictly have to, but you should:
 
 - **Why it usually doesn't crash.** `make install` uses `install`, which
   deletes the old file and writes a new one rather than writing over it. The
@@ -207,16 +302,6 @@ You don't strictly have to stop FreeSWITCH before `make install`, but you should
   and new files.
 - **New code only runs after a restart.** You have to restart to use the new
   build either way.
-
-Low-downtime rebuild:
-
-```sh
-cd /usr/src/freeswitch-<version>
-make                          # while FreeSWITCH is still running
-systemctl stop freeswitch
-make install && ldconfig
-systemctl start freeswitch
-```
 
 ---
 
