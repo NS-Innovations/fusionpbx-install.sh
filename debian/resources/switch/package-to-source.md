@@ -75,6 +75,23 @@ Or:
 - Skip this step and let `source-release.sh` do the whole build in step 5,
   during the maintenance window.
 
+Notes for compiling by hand:
+
+- **TLS certificate reload support.** Run this export before `configure`, as
+  `source-release.sh` does. Without it the build still works, but
+  `fs_cli -x reloadcert` isn't available.
+
+  ```sh
+  export CPPFLAGS="${CPPFLAGS} -DHAVE_NUA_RELOAD_TLS"
+  ```
+
+- **The dependency libraries are installed right away.** The libks, sofia-sip
+  and spandsp builds each run `make install` and `ldconfig`, so the
+  source-built libraries in `/usr/local/lib` take over immediately. If the
+  package version of FreeSWITCH restarts before the maintenance window, it
+  loads those libraries instead of its own. Keep the gap between this step
+  and step 4 short.
+
 ## 4. Maintenance window: stop FreeSWITCH and remove the packages
 
 You must remove the packages **before** `make install`. Otherwise removing the
